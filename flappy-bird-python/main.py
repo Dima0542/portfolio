@@ -1,7 +1,20 @@
 import pygame
 import random
+import json
 
 pygame.init()
+
+with open("record.json", "r", encoding="utf-8") as file:
+    record_dict = json.load(file)
+    record = record_dict["record"]
+
+def record_update(reset_record):
+    global score, record, record_dict
+    if score > record and not(reset_record):
+        record = score
+        with open("record.json", "w", encoding="utf-8") as file:
+            record_dict["record"] = record
+            json.dump(record_dict, file, indent=4)
 
 class Sprite:
     def __init__(self, x, y, width, height):
@@ -64,7 +77,7 @@ bg = pygame.transform.scale(bg, (800, 600))
 bird = Bird(100, 100, 60, 60, "Images/sprite_1.png")
 score = 0
 
-running_two = True
+reset_record = False
 running = True
 while running:
     window.fill((0, 0, 0))
@@ -72,8 +85,15 @@ while running:
     bird.draw(window)
     for event in pygame.event.get():
         if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-            running_two = False
             running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_r:
+                with open("record.json", "w", encoding="utf-8") as file:
+                    record = 0
+                    record_dict["record"] = 0
+                    json.dump(record_dict, file, indent=4)
+                reset_record = True
+                running = False
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_SPACE]:
@@ -121,23 +141,25 @@ while running:
 
 end_timer = 0
 
-if running_two:
-    while end_timer < 60:
-        window.fill((0, 0, 0))
-        window.blit(bg, (0, 0))
+record_update(reset_record)
+while end_timer < 60:
+    window.fill((0, 0, 0))
+    window.blit(bg, (0, 0))
 
-        end_text = font.render(f"The End", True, (255, 255, 255))
-        score_text = font.render(f"Score: {int(score)}", True, (255, 255, 255))
+    end_text = font.render(f"The End", True, (255, 255, 255))
+    score_text = font.render(f"Score: {int(score)}", True, (255, 255, 255))
+    record_text = font.render(f"Record: {int(record)}", True, (255, 255, 255))
 
-        window.blit(end_text, (400 - end_text.get_width() // 2, 200))
-        window.blit(score_text, (400 - score_text.get_width() // 2, 300))
+    window.blit(end_text, (400 - end_text.get_width() // 2, 150))
+    window.blit(score_text, (400 - score_text.get_width() // 2, 250))
+    window.blit(record_text, (400 - record_text.get_width() // 2, 350))
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                end_timer = 60
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+            end_timer = 60
 
-        pygame.display.update()
-        clock.tick(60)
-        end_timer += 1
+    pygame.display.update()
+    clock.tick(60)
+    end_timer += 1
 
 pygame.quit()
